@@ -168,7 +168,7 @@ func SJFSchedule(w io.Writer, title string, processes []Process){			// needs to 
 	// var low int64 = 100
 	var (
 		// lengthP int = (len(processes) + 1)
-		serviceTime     int64
+		serviceTime     int64 = 0
 		totalWait       float64
 		totalTurnaround float64
 		lastCompletion  float64
@@ -184,6 +184,7 @@ func SJFSchedule(w io.Writer, title string, processes []Process){			// needs to 
 	var currentP int64 = 0
 	completion = start + completion + turnaround
 	var temp1 int64
+	var scheduled []int64
 	// slic := []Process{}
 	runnin := []Process{}
 	var run1 Process
@@ -193,6 +194,13 @@ func SJFSchedule(w io.Writer, title string, processes []Process){			// needs to 
 	for i := 0; i<=99; i++ {		// time interval for loop, cycles from 0-99 for each second
 		// var lowest int64 = 1000		// initializes the lowest burst placeholder with a very high value so that it is not automatically the quickest on the stack
 		var temp2 int64
+		if i <= 5{
+			print("Process list is: ")
+			for aa := range processes {
+				print(processes[aa].ProcessID, ", ")
+			}
+			print("\n")
+		}
 		// var boo bool = false
 		if i <= 20 {
 			print("time is: ", i, "runnin list is: ")
@@ -210,6 +218,12 @@ func SJFSchedule(w io.Writer, title string, processes []Process){			// needs to 
 				print(gantt[w].PID, ", ")
 			}
 			print("\n")
+			print("time is: ", i, "starts value is: ")
+			for ab := range starts {
+				print(starts[ab], ", ")
+			}
+			print("\n ")
+			
 		}
 		if len(runnin) > 0 {
 			for p := range runnin {
@@ -246,6 +260,7 @@ func SJFSchedule(w io.Writer, title string, processes []Process){			// needs to 
 		for k := range runnin {
 			if runnin[k].BurstDuration < run1.BurstDuration {
 				run1 := runnin[k]
+				print("starting now: ", i, "\n")
 				starts[run1.ProcessID] = int64(i)
 			} else {
 				continue
@@ -303,67 +318,108 @@ func SJFSchedule(w io.Writer, title string, processes []Process){			// needs to 
 				continue
 			}*/
 			// |  1 |        2 |     5 |       0 |       0 |          5 |          5 |
+			var boo3 bool = false
+			if len(scheduled) > 0 {
+				for z := range scheduled {
+					if scheduled[z] == run1.ProcessID {
+						boo3 = true
+					}
+				}
 
-			waitingTime = serviceTime - processes[temp1].ArrivalTime
-			totalWait += float64(waitingTime)
-			start := waitingTime + processes[temp1].ArrivalTime
-			turnaround := processes[temp1].BurstDuration + waitingTime
-			totalTurnaround += float64(turnaround)
-			completion := processes[temp1].BurstDuration + processes[temp1].ArrivalTime + waitingTime
-			lastCompletion = float64(completion)
-			var boo bool = false
-			if currentP < int64(len(processes)) && len(schedule[0]) > 0{
-				if len(schedule) > 0 {
-					for x := range schedule {
-						if schedule[x][0] != string(temp1) {
-							continue
-						} else {
+			}
+			scheduled = append(scheduled, run1.ProcessID)
+			if boo3 == false {			
+				waitingTime = serviceTime - processes[temp1].ArrivalTime
+				totalWait += float64(waitingTime)
+				start := waitingTime + processes[temp1].ArrivalTime
+				turnaround := processes[temp1].BurstDuration + waitingTime
+				totalTurnaround += float64(turnaround)
+				completion := processes[temp1].BurstDuration + processes[temp1].ArrivalTime + waitingTime
+				lastCompletion = float64(completion)
+				// var boo bool = false
+				if currentP < int64(len(processes)){
+					/*if len(schedule) > 0 {
+						for x := range schedule {
+							if schedule[x][0] != string(processes[temp1].ProcessID) {
+								continue
+							} else {
+								boo = true
+							}
+						}
+					} else {
+						boo = false
+					}*/
+					// if boo == false {
+					/*var boo2 bool = false
+					if len(schedule) > 0 {
+						for z := range schedule {
+							if len(schedule) > z && len(schedule[z]) > 0 && schedule[z][0] != string(processes[temp1].ProcessID) {
+								continue
+							} else if schedule[z][0] == string(processes[temp1].ProcessID){
+								boo2 = true
+							}
+						}
+					}
+					if boo2 == false {
+						
+					}*/
+					// }
+					
+					schedule[currentP] = []string{
+						fmt.Sprint(processes[temp1].ProcessID),
+						fmt.Sprint(processes[temp1].Priority),
+						fmt.Sprint(processes[temp1].BurstDuration),
+						fmt.Sprint(processes[temp1].ArrivalTime),
+						fmt.Sprint(waitingTime),
+						fmt.Sprint(turnaround),
+						fmt.Sprint(completion),
+					}
+					print("Schedule currentP[0] is: ", schedule[currentP][0], "\n")
+					currentP += 1
+				}
+					// print("currentP is: ", schedule[currentP-1], "\n")
+				// print("Schedule currentP processID is: ", schedule[currentP], "\n")
+				/*var boo bool = false
+				for v := range gantt {
+					if gantt[v].PID == temp1 {
+						boo = true
+					}
+				}
+				if boo != true {
+					gantt = append(gantt, TimeSlice{
+						PID:   processes[temp1].ProcessID,
+						Start: start,
+						Stop:  serviceTime,
+					})
+				}*/
+				lowest = 1000
+				if run1.ProcessID != 0 {
+					ran = append(ran, run1)
+				}
+				var boo bool = false
+				if len(ran) > 0 {
+					for y:= range ran {
+						if ran[y].ProcessID == processes[temp1].ProcessID {
 							boo = true
 						}
 					}
-					if boo == false {
-						schedule[currentP] = []string{
-							fmt.Sprint(processes[temp1].ProcessID),
-							fmt.Sprint(processes[temp1].Priority),
-							fmt.Sprint(processes[temp1].BurstDuration),
-							fmt.Sprint(processes[temp1].ArrivalTime),
-							fmt.Sprint(waitingTime),
-							fmt.Sprint(turnaround),
-							fmt.Sprint(completion),
-						}
-						currentP += 1
+				}
+				if boo == true {
+					gantt = append(gantt, TimeSlice{
+						PID:   processes[temp1].ProcessID,
+						Start: start,
+						Stop:  serviceTime,
+					})
+				}
+				for n := range runnin {
+					if runnin[n].BurstDuration < lowest {
+						run1 = runnin[n]
+						lowest = runnin[n].BurstDuration
 					}
 				}
-				// print("currentP is: ", schedule[currentP-1], "\n")
+				serviceTime += processes[temp1].BurstDuration
+				continue
 			}
-			serviceTime += processes[temp1].BurstDuration
-			// print("Schedule currentP processID is: ", schedule[currentP], "\n")
-			/*var boo bool = false
-			for v := range gantt {
-				if gantt[v].PID == temp1 {
-					boo = true
-				}
-			}
-			if boo != true {
-				gantt = append(gantt, TimeSlice{
-					PID:   processes[temp1].ProcessID,
-					Start: start,
-					Stop:  serviceTime,
-				})
-			}*/
-			gantt = append(gantt, TimeSlice{
-				PID:   processes[temp1].ProcessID,
-				Start: start,
-				Stop:  serviceTime,
-			})
-			lowest = 1000
-			for n := range runnin {
-				if runnin[n].BurstDuration < lowest {
-					run1 = runnin[n]
-					lowest = runnin[n].BurstDuration
-				}
-			}
-			ran = append(ran, run1)
 			continue
 		}
 		
