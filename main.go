@@ -92,6 +92,7 @@ func FCFSSchedule(w io.Writer, title string, processes []Process) {
 		totalWait += float64(waitingTime)
 
 		start := waitingTime + processes[i].ArrivalTime
+		print("\nCurrent gantt append: ProcessID: ", processes[i].ProcessID, ", WaitingTime: ", waitingTime, ", start: ", start, ", stop: ", serviceTime, ", Burst Duration: ", processes[i].BurstDuration, "\n")
 
 		turnaround := processes[i].BurstDuration + waitingTime
 		totalTurnaround += float64(turnaround)
@@ -164,7 +165,7 @@ func newProcess(ID int64) *Process {
 	return &run1
 }
 
-func SJFSchedule(w io.Writer, title string, processes []Process){			// needs to give avg turn, avg wait, and avg throughput
+func SJFScheduler(w io.Writer, title string, processes []Process){			// needs to give avg turn, avg wait, and avg throughput
 	// var low int64 = 100
 	var (
 		// lengthP int = (len(processes) + 1)
@@ -188,21 +189,22 @@ func SJFSchedule(w io.Writer, title string, processes []Process){			// needs to 
 	// slic := []Process{}
 	runnin := []Process{}
 	var run1 Process
+	// run1.BurstDuration = 1000
 	// var active bool = false
 	var lowest int64 = 1000
 	// run1.ProcessID = -1			// first choice to run placeholder
 	for i := 0; i<=99; i++ {		// time interval for loop, cycles from 0-99 for each second
 		// var lowest int64 = 1000		// initializes the lowest burst placeholder with a very high value so that it is not automatically the quickest on the stack
 		var temp2 int64
-		if i <= 5{
+		/*if i <= 5{
 			print("Process list is: ")
 			for aa := range processes {
 				print(processes[aa].ProcessID, ", ")
 			}
 			print("\n")
 		}
-		// var boo bool = false
-		if i <= 20 {
+		// var boo bool = false*/
+		/*if i <= 20 {
 			print("time is: ", i, "runnin list is: ")
 			for r := range runnin {
 				print(runnin[r].ProcessID, ", ")
@@ -218,13 +220,13 @@ func SJFSchedule(w io.Writer, title string, processes []Process){			// needs to 
 				print(gantt[w].PID, ", ")
 			}
 			print("\n")
-			print("time is: ", i, "starts value is: ")
+			print("time is: ", i, ", starts value is: ")
 			for ab := range starts {
 				print(starts[ab], ", ")
 			}
 			print("\n ")
 			
-		}
+		}*/
 		if len(runnin) > 0 {
 			for p := range runnin {
 				if p < len(runnin) {
@@ -260,7 +262,7 @@ func SJFSchedule(w io.Writer, title string, processes []Process){			// needs to 
 		for k := range runnin {
 			if runnin[k].BurstDuration < run1.BurstDuration {
 				run1 := runnin[k]
-				print("starting now: ", i, "\n")
+				print("starting now: ", i, ", run1 is: ", run1.ProcessID, "\n")
 				starts[run1.ProcessID] = int64(i)
 			} else {
 				continue
@@ -327,8 +329,9 @@ func SJFSchedule(w io.Writer, title string, processes []Process){			// needs to 
 				}
 
 			}
-			scheduled = append(scheduled, run1.ProcessID)
+			
 			if boo3 == false {			
+				scheduled = append(scheduled, run1.ProcessID)
 				waitingTime = serviceTime - processes[temp1].ArrivalTime
 				totalWait += float64(waitingTime)
 				start := waitingTime + processes[temp1].ArrivalTime
@@ -374,7 +377,7 @@ func SJFSchedule(w io.Writer, title string, processes []Process){			// needs to 
 						fmt.Sprint(turnaround),
 						fmt.Sprint(completion),
 					}
-					print("Schedule currentP[0] is: ", schedule[currentP][0], "\n")
+					// print("Schedule currentP[0] is: ", schedule[currentP][0], "\n")
 					currentP += 1
 				}
 					// print("currentP is: ", schedule[currentP-1], "\n")
@@ -450,8 +453,222 @@ func SJFSchedule(w io.Writer, title string, processes []Process){			// needs to 
 	outputGantt(w, gantt)
 	outputSchedule(w, schedule, aveWait, aveTurnaround, aveThroughput)
 }
-//func SJFSchedule(w io.Writer, title string, processes []Process) { }
-//
+
+func searchP(slic []Process, Pr Process) bool{
+	for a := range slic{
+		if slic[a] == Pr {
+			return true
+		}
+	}
+	return false
+}
+
+func SJFSchedule(w io.Writer, title string, processes []Process) {
+	var (
+		serviceTime     int64
+		totalWait       float64
+		totalTurnaround float64
+		lastCompletion  float64
+		waitingTime     int64
+		low				int64 = 100
+		change			bool = false
+		currentProc		int64 = 0
+		lengthP 		int64 = int64(len(processes)) + int64(1)
+		starts			= make([]int64, 100)
+		schedule        = make([][]string, lengthP)
+		gantt           = make([]TimeSlice, 0)
+		arrived			= make([]Process, len(processes))
+		inProgress 		Process
+		templateP		Process
+		ran				= make([]Process, len(processes))
+	)
+	inProgress.ProcessID = -1
+	templateP.ProcessID = -1
+	templateP.BurstDuration = 100
+
+	for i := 0; i<=99; i++ {	
+		low = 100
+		if i <= 20 {
+			print("Time is: ", i, "\n")
+		}
+		change = false
+		for a := range processes{
+			if processes[a].ArrivalTime <= int64(i) && !searchP(ran, processes[a]){
+				arrived = append(arrived, processes[a])
+			}
+		}
+		if inProgress.ProcessID >= 0 && !searchP(ran, inProgress){
+			low = inProgress.BurstDuration
+		}
+		for b := range arrived {
+			if b < len(arrived){
+				if arrived[b].BurstDuration < low && !searchP(ran, arrived[b]){
+					inProgress = arrived[b]
+					change = true
+				}
+			}
+		}
+		if change == true {
+			starts[inProgress.ProcessID] = int64(i)
+		}
+		if inProgress.ProcessID >= 0 && !searchP(ran, inProgress){
+			if int64(i) == inProgress.BurstDuration + starts[inProgress.ProcessID] {
+				currentProc += 1
+				waitingTime = starts[inProgress.ProcessID] - inProgress.ArrivalTime
+				print("time is currently: ", i, " = ", inProgress.BurstDuration, " + ", starts[inProgress.ProcessID])
+				print("starts: ", starts[inProgress.ProcessID], " - ArrivalTime: ", inProgress.ArrivalTime, " = WaitingTime: ", waitingTime, "\n")
+				totalWait += float64(waitingTime)
+				start := waitingTime + inProgress.ArrivalTime		// burst + start - arrival
+				turnaround := inProgress.BurstDuration + waitingTime
+				totalTurnaround += float64(turnaround)
+				completion := inProgress.BurstDuration + inProgress.ArrivalTime + waitingTime
+				lastCompletion = float64(completion)
+				schedule[currentProc] = []string{
+					fmt.Sprint(inProgress.ProcessID),
+					fmt.Sprint(inProgress.Priority),
+					fmt.Sprint(inProgress.BurstDuration),
+					fmt.Sprint(inProgress.ArrivalTime),
+					fmt.Sprint(waitingTime),
+					fmt.Sprint(turnaround),
+					fmt.Sprint(completion),
+				}
+				serviceTime = int64(i)
+				gantt = append(gantt, TimeSlice{
+					PID:   inProgress.ProcessID,
+					Start: start,
+					Stop:  serviceTime,
+				})
+				print("\nCurrent gantt append: ProcessID: ", inProgress.ProcessID, ", Waiting time: ", waitingTime, ", start: ", start, ", stop: ", serviceTime, ", Burst Duration: ", inProgress.BurstDuration, "\n")
+				ran = append(ran, inProgress)
+				inProgress = templateP
+				for b := range arrived {
+					if b < len(arrived){
+						if arrived[b].BurstDuration < low && !searchP(ran, arrived[b]){
+							inProgress = arrived[b]
+							change = true
+						}
+					}
+				}
+				if change == true {
+					starts[inProgress.ProcessID] = int64(i)
+				}
+			}
+		}
+	}
+
+	count := float64(len(processes))
+	aveWait := totalWait / count
+	aveTurnaround := totalTurnaround / count
+	aveThroughput := count / lastCompletion
+	outputTitle(w, title)
+	outputGantt(w, gantt)
+	outputSchedule(w, schedule, aveWait, aveTurnaround, aveThroughput)
+}
+
+
+func SJFPrioritySchedule(w io.Writer, title string, processes []Process) {
+	var (
+		serviceTime     int64
+		totalWait       float64
+		totalTurnaround float64
+		lastCompletion  float64
+		waitingTime     int64
+		low				int64 = 100
+		change			bool = false
+		currentProc		int64 = 0
+		lengthP 		int64 = int64(len(processes)) + int64(1)
+		starts			= make([]int64, 100)
+		schedule        = make([][]string, lengthP)
+		gantt           = make([]TimeSlice, 0)
+		arrived			= make([]Process, len(processes))
+		inProgress 		Process
+		templateP		Process
+		ran				= make([]Process, len(processes))
+	)
+	inProgress.ProcessID = -1
+	templateP.ProcessID = -1
+	templateP.BurstDuration = 100
+
+	for i := 0; i<=99; i++ {	
+		low = 100
+		if i <= 20 {
+			print("Time is: ", i, "\n")
+		}
+		change = false
+		for a := range processes{
+			if processes[a].ArrivalTime <= int64(i) && !searchP(ran, processes[a]){
+				arrived = append(arrived, processes[a])
+			}
+		}
+		if inProgress.ProcessID >= 0 && !searchP(ran, inProgress){
+			low = inProgress.BurstDuration
+		}
+		for b := range arrived {		// adjust this loop to include the priority property and split ties based on priority
+			if b < len(arrived){
+				if arrived[b].BurstDuration < low && !searchP(ran, arrived[b]){
+					inProgress = arrived[b]
+					change = true
+				}
+			}
+		}
+		if change == true {
+			starts[inProgress.ProcessID] = int64(i)
+		}
+		if inProgress.ProcessID >= 0 && !searchP(ran, inProgress){
+			if int64(i) == inProgress.BurstDuration + starts[inProgress.ProcessID] {
+				currentProc += 1
+				waitingTime = starts[inProgress.ProcessID] - inProgress.ArrivalTime
+				print("time is currently: ", i, " = ", inProgress.BurstDuration, " + ", starts[inProgress.ProcessID])
+				print("starts: ", starts[inProgress.ProcessID], " - ArrivalTime: ", inProgress.ArrivalTime, " = WaitingTime: ", waitingTime, "\n")
+				totalWait += float64(waitingTime)
+				start := waitingTime + inProgress.ArrivalTime		// burst + start - arrival
+				turnaround := inProgress.BurstDuration + waitingTime
+				totalTurnaround += float64(turnaround)
+				completion := inProgress.BurstDuration + inProgress.ArrivalTime + waitingTime
+				lastCompletion = float64(completion)
+				schedule[currentProc] = []string{
+					fmt.Sprint(inProgress.ProcessID),
+					fmt.Sprint(inProgress.Priority),
+					fmt.Sprint(inProgress.BurstDuration),
+					fmt.Sprint(inProgress.ArrivalTime),
+					fmt.Sprint(waitingTime),
+					fmt.Sprint(turnaround),
+					fmt.Sprint(completion),
+				}
+				serviceTime = int64(i)
+				gantt = append(gantt, TimeSlice{
+					PID:   inProgress.ProcessID,
+					Start: start,
+					Stop:  serviceTime,
+				})
+				print("\nCurrent gantt append: ProcessID: ", inProgress.ProcessID, ", Waiting time: ", waitingTime, ", start: ", start, ", stop: ", serviceTime, ", Burst Duration: ", inProgress.BurstDuration, "\n")
+				ran = append(ran, inProgress)
+				inProgress = templateP
+				for b := range arrived {
+					if b < len(arrived){
+						if arrived[b].BurstDuration < low && !searchP(ran, arrived[b]){
+							inProgress = arrived[b]
+							change = true
+						}
+					}
+				}
+				if change == true {
+					starts[inProgress.ProcessID] = int64(i)
+				}
+			}
+		}
+	}
+
+	count := float64(len(processes))
+	aveWait := totalWait / count
+	aveTurnaround := totalTurnaround / count
+	aveThroughput := count / lastCompletion
+	outputTitle(w, title)
+	outputGantt(w, gantt)
+	outputSchedule(w, schedule, aveWait, aveTurnaround, aveThroughput)
+}
+
+
 //func RRSchedule(w io.Writer, title string, processes []Process) { }
 
 //endregion
