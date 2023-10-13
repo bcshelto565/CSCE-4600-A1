@@ -32,7 +32,7 @@ func main() {
 
 	SJFSchedule(os.Stdout, "Shortest-job-first", processes)
 	
-	//SJFPrioritySchedule(os.Stdout, "Priority", processes)
+	SJFPrioritySchedule(os.Stdout, "Priority", processes)
 	//
 	//RRSchedule(os.Stdout, "Round-robin", processes)
 }
@@ -163,295 +163,6 @@ func findRep(s []Process, i int64) int64 {
 func newProcess(ID int64) *Process {
 	run1 := Process{ProcessID: ID}
 	return &run1
-}
-
-func SJFScheduler(w io.Writer, title string, processes []Process){			// needs to give avg turn, avg wait, and avg throughput
-	// var low int64 = 100
-	var (
-		// lengthP int = (len(processes) + 1)
-		serviceTime     int64 = 0
-		totalWait       float64
-		totalTurnaround float64
-		lastCompletion  float64
-		waitingTime     int64
-		schedule        = make([][]string, len(processes))
-		gantt           = make([]TimeSlice, 0)
-	)
-	starts := make(map[int64]int64)
-	ran := []Process{}
-	var completion int64 = 0
-	var start int64 = 0
-	var turnaround int64 = 0
-	var currentP int64 = 0
-	completion = start + completion + turnaround
-	var temp1 int64
-	var scheduled []int64
-	// slic := []Process{}
-	runnin := []Process{}
-	var run1 Process
-	// run1.BurstDuration = 1000
-	// var active bool = false
-	var lowest int64 = 1000
-	// run1.ProcessID = -1			// first choice to run placeholder
-	for i := 0; i<=99; i++ {		// time interval for loop, cycles from 0-99 for each second
-		// var lowest int64 = 1000		// initializes the lowest burst placeholder with a very high value so that it is not automatically the quickest on the stack
-		var temp2 int64
-		/*if i <= 5{
-			print("Process list is: ")
-			for aa := range processes {
-				print(processes[aa].ProcessID, ", ")
-			}
-			print("\n")
-		}
-		// var boo bool = false*/
-		/*if i <= 20 {
-			print("time is: ", i, "runnin list is: ")
-			for r := range runnin {
-				print(runnin[r].ProcessID, ", ")
-			}
-			print("\n")
-			print("time is: ", i, "ran list is: ")
-			for t := range ran {
-				print(ran[t].ProcessID, ", ")
-			}
-			print("\n")
-			print("time is: ", i, "gantt list is: ")
-			for w := range gantt {
-				print(gantt[w].PID, ", ")
-			}
-			print("\n")
-			print("time is: ", i, ", starts value is: ")
-			for ab := range starts {
-				print(starts[ab], ", ")
-			}
-			print("\n ")
-			
-		}*/
-		if len(runnin) > 0 {
-			for p := range runnin {
-				if p < len(runnin) {
-					temp2 = runnin[p].ProcessID
-					if findRep(runnin, temp2) > 1 {
-						runnin = remove(runnin, temp2)
-					}
-				}
-			}
-		}
-		for j := range processes{	// for loop to now cycle through the processes and decide if a new process needs to be started
-			if processes[j].ArrivalTime <= int64(i) {
-				if findRep(ran, processes[j].ProcessID) == 0 {
-					if processes[j].BurstDuration < lowest {
-						lowest = processes[j].BurstDuration
-					}
-					if findRep(runnin, processes[j].ProcessID) == 0{
-						runnin = append(runnin, processes[j])
-					}
-				}
-				// 1111111112
-				// print(processes[j].ProcessID)
-				// print(runnin[len(runnin)-1].ProcessID)
-				// var run1 Process
-				// run1 is now run and therefore needs to be "run" so make it do all the stats stuff.
-			} else {
-				continue
-			}	// line 92 starts this section in FCFS function
-		}
-		if len(runnin) == 0{
-			continue
-		}
-		for k := range runnin {
-			if runnin[k].BurstDuration < run1.BurstDuration {
-				run1 := runnin[k]
-				print("starting now: ", i, ", run1 is: ", run1.ProcessID, "\n")
-				starts[run1.ProcessID] = int64(i)
-			} else {
-				continue
-			}
-		}
-		if run1.BurstDuration == (int64(i) - starts[run1.ProcessID]) {
-			// var curP []string
-			// var temp3 []string
-			for l := range runnin {
-				if l >= 0 && l < len(runnin) && runnin[l] == run1 {
-					if len(runnin) > 1 {
-						runnin = remove(runnin, int64(l))
-					} else {
-						runnin = []Process{}
-					}
-				}
-			}
-			for m := range processes{
-				if processes[m] == run1 {
-					temp1 = int64(m)
-				}
-			}
-			// currentP += 1
-			/*for t := range ran {
-				if ran[t] == run1 {
-					boo = true
-				}
-			}
-			if boo == true{
-				continue
-			}*/
-			/*curP = []string{
-				fmt.Sprint(processes[temp1].ProcessID),
-				fmt.Sprint(processes[temp1].Priority),
-				fmt.Sprint(processes[temp1].BurstDuration),
-				fmt.Sprint(processes[temp1].ArrivalTime),
-				fmt.Sprint(waitingTime),
-				fmt.Sprint(turnaround),
-				fmt.Sprint(completion),
-			}
-			for u := range schedule {
-				temp3 = schedule[u]
-				if temp3 == curP {
-					boo = true
-				}
-			}*/
-
-			/*for s := range schedule {
-				if curP[0] != schedule[s][0] {
-					boo = false
-				}
-			}
-
-			if boo == true {
-				continue
-			}*/
-			// |  1 |        2 |     5 |       0 |       0 |          5 |          5 |
-			var boo3 bool = false
-			if len(scheduled) > 0 {
-				for z := range scheduled {
-					if scheduled[z] == run1.ProcessID {
-						boo3 = true
-					}
-				}
-
-			}
-			
-			if boo3 == false {			
-				scheduled = append(scheduled, run1.ProcessID)
-				waitingTime = serviceTime - processes[temp1].ArrivalTime
-				totalWait += float64(waitingTime)
-				start := waitingTime + processes[temp1].ArrivalTime
-				turnaround := processes[temp1].BurstDuration + waitingTime
-				totalTurnaround += float64(turnaround)
-				completion := processes[temp1].BurstDuration + processes[temp1].ArrivalTime + waitingTime
-				lastCompletion = float64(completion)
-				// var boo bool = false
-				if currentP < int64(len(processes)){
-					/*if len(schedule) > 0 {
-						for x := range schedule {
-							if schedule[x][0] != string(processes[temp1].ProcessID) {
-								continue
-							} else {
-								boo = true
-							}
-						}
-					} else {
-						boo = false
-					}*/
-					// if boo == false {
-					/*var boo2 bool = false
-					if len(schedule) > 0 {
-						for z := range schedule {
-							if len(schedule) > z && len(schedule[z]) > 0 && schedule[z][0] != string(processes[temp1].ProcessID) {
-								continue
-							} else if schedule[z][0] == string(processes[temp1].ProcessID){
-								boo2 = true
-							}
-						}
-					}
-					if boo2 == false {
-						
-					}*/
-					// }
-					
-					schedule[currentP] = []string{
-						fmt.Sprint(processes[temp1].ProcessID),
-						fmt.Sprint(processes[temp1].Priority),
-						fmt.Sprint(processes[temp1].BurstDuration),
-						fmt.Sprint(processes[temp1].ArrivalTime),
-						fmt.Sprint(waitingTime),
-						fmt.Sprint(turnaround),
-						fmt.Sprint(completion),
-					}
-					// print("Schedule currentP[0] is: ", schedule[currentP][0], "\n")
-					currentP += 1
-				}
-					// print("currentP is: ", schedule[currentP-1], "\n")
-				// print("Schedule currentP processID is: ", schedule[currentP], "\n")
-				/*var boo bool = false
-				for v := range gantt {
-					if gantt[v].PID == temp1 {
-						boo = true
-					}
-				}
-				if boo != true {
-					gantt = append(gantt, TimeSlice{
-						PID:   processes[temp1].ProcessID,
-						Start: start,
-						Stop:  serviceTime,
-					})
-				}*/
-				lowest = 1000
-				if run1.ProcessID != 0 {
-					ran = append(ran, run1)
-				}
-				var boo bool = false
-				if len(ran) > 0 {
-					for y:= range ran {
-						if ran[y].ProcessID == processes[temp1].ProcessID {
-							boo = true
-						}
-					}
-				}
-				if boo == true {
-					gantt = append(gantt, TimeSlice{
-						PID:   processes[temp1].ProcessID,
-						Start: start,
-						Stop:  serviceTime,
-					})
-				}
-				for n := range runnin {
-					if runnin[n].BurstDuration < lowest {
-						run1 = runnin[n]
-						lowest = runnin[n].BurstDuration
-					}
-				}
-				serviceTime += processes[temp1].BurstDuration
-				continue
-			}
-			continue
-		}
-		
-		
-		
-		// adjust here so that the stuff happening is either above /\ where it happens EACH TIME a process completes
-		// or happens below \/ after ALL processes complete
-		/*for o := range runnin {
-			// print(runnin[o].ProcessID)
-			print("Value of i: ", i, ", ")
-    		print("Value of o: ", runnin[o].ProcessID)
-			print("\n")
-		}
-		for q := range ran {
-			print("ran: ", ran[q].ProcessID)
-			print("\n")
-		}*/
-	}
-	
-
-	
-	count := float64(len(processes))
-	aveWait := totalWait / count
-	aveTurnaround := totalTurnaround / count
-	aveThroughput := count / lastCompletion
-
-	outputTitle(w, title)
-	outputGantt(w, gantt)
-	outputSchedule(w, schedule, aveWait, aveTurnaround, aveThroughput)
 }
 
 func searchP(slic []Process, Pr Process) bool{
@@ -591,9 +302,6 @@ func SJFPrioritySchedule(w io.Writer, title string, processes []Process) {
 
 	for i := 0; i<=99; i++ {	
 		low = 100
-		if i <= 20 {
-			print("Time is: ", i, "\n")
-		}
 		change = false
 		for a := range processes{
 			if processes[a].ArrivalTime <= int64(i) && !searchP(ran, processes[a]){
@@ -605,6 +313,13 @@ func SJFPrioritySchedule(w io.Writer, title string, processes []Process) {
 		}
 		for b := range arrived {		// adjust this loop to include the priority property and split ties based on priority
 			if b < len(arrived){
+				if arrived[b].BurstDuration == low && !searchP(ran, arrived[b]){
+					if arrived[b].Priority < inProgress.Priority{
+						inProgress = arrived[b]
+					} else {
+						continue
+					}
+				}
 				if arrived[b].BurstDuration < low && !searchP(ran, arrived[b]){
 					inProgress = arrived[b]
 					change = true
@@ -618,8 +333,8 @@ func SJFPrioritySchedule(w io.Writer, title string, processes []Process) {
 			if int64(i) == inProgress.BurstDuration + starts[inProgress.ProcessID] {
 				currentProc += 1
 				waitingTime = starts[inProgress.ProcessID] - inProgress.ArrivalTime
-				print("time is currently: ", i, " = ", inProgress.BurstDuration, " + ", starts[inProgress.ProcessID])
-				print("starts: ", starts[inProgress.ProcessID], " - ArrivalTime: ", inProgress.ArrivalTime, " = WaitingTime: ", waitingTime, "\n")
+				// print("time is currently: ", i, " = ", inProgress.BurstDuration, " + ", starts[inProgress.ProcessID])
+				// print("starts: ", starts[inProgress.ProcessID], " - ArrivalTime: ", inProgress.ArrivalTime, " = WaitingTime: ", waitingTime, "\n")
 				totalWait += float64(waitingTime)
 				start := waitingTime + inProgress.ArrivalTime		// burst + start - arrival
 				turnaround := inProgress.BurstDuration + waitingTime
@@ -641,7 +356,7 @@ func SJFPrioritySchedule(w io.Writer, title string, processes []Process) {
 					Start: start,
 					Stop:  serviceTime,
 				})
-				print("\nCurrent gantt append: ProcessID: ", inProgress.ProcessID, ", Waiting time: ", waitingTime, ", start: ", start, ", stop: ", serviceTime, ", Burst Duration: ", inProgress.BurstDuration, "\n")
+				// print("\nCurrent gantt append: ProcessID: ", inProgress.ProcessID, ", Waiting time: ", waitingTime, ", start: ", start, ", stop: ", serviceTime, ", Burst Duration: ", inProgress.BurstDuration, "\n")
 				ran = append(ran, inProgress)
 				inProgress = templateP
 				for b := range arrived {
@@ -669,7 +384,16 @@ func SJFPrioritySchedule(w io.Writer, title string, processes []Process) {
 }
 
 
-//func RRSchedule(w io.Writer, title string, processes []Process) { }
+func RRSchedule(w io.Writer, title string, processes []Process) {
+
+	count := float64(len(processes))
+	aveWait := totalWait / count
+	aveTurnaround := totalTurnaround / count
+	aveThroughput := count / lastCompletion
+	outputTitle(w, title)
+	outputGantt(w, gantt)
+	outputSchedule(w, schedule, aveWait, aveTurnaround, aveThroughput)
+}
 
 //endregion
 
