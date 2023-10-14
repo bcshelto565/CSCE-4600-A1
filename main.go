@@ -386,7 +386,7 @@ func SJFPrioritySchedule(w io.Writer, title string, processes []Process) {
 // the main difference is programming in a timer variable to pre-empt the processes which do not finish in the allotted time
 func RRSchedule(w io.Writer, title string, processes []Process) {
 	var (
-		serviceTime     int64
+		// serviceTime     int64
 		totalWait       float64
 		totalTurnaround float64
 		lastCompletion  float64
@@ -401,10 +401,10 @@ func RRSchedule(w io.Writer, title string, processes []Process) {
 		starts			= make([]int64, 100)
 		currentProc		int64 = -1
 	)
-	for z := range starts{
-		starts[z] = -1
+	for z := range starts{			// initializes the starts queue with -1 as a start time so that -1 can be used as a blank flag
+		starts[z] = -1				// as no start time would be -1
 	}
-	for a := 0; a<100; a++{
+	for a := 0; a<100; a++{			// a = seconds and is therefore the timer for the function
 		if a < 25 {
 			print("Time is: ", a, ", Second Queue = ")
 			for c := range secondQ {
@@ -428,6 +428,11 @@ func RRSchedule(w io.Writer, title string, processes []Process) {
 			}
 			secondQ[0].BurstDuration -= int64(maxTime)
 			temp1 = secondQ[0]
+			gantt = append(gantt, TimeSlice{
+				PID:   temp1.ProcessID,
+				Start: int64(a),
+				Stop:  int64(a+1),
+			})
 			if secondQ[0].BurstDuration == 0 {
 				print("\nTime is: ", a, ", Completed value = ", secondQ[0].ProcessID, "\n")
 				lstRan = append(lstRan, secondQ[0])
@@ -436,7 +441,7 @@ func RRSchedule(w io.Writer, title string, processes []Process) {
 				waitingTime = starts[temp1.ProcessID] - temp1.ArrivalTime
 				// print("waitingTime(", temp1.ProcessID, ") = ", "starts[", temp1.ProcessID, "] ", starts[temp1.ProcessID], " - ArrivalTime(", temp1.ArrivalTime, ") = ", waitingTime)
 				totalWait += float64(waitingTime)
-				start := waitingTime + temp1.ArrivalTime		// burst + start - arrival
+				// start := waitingTime + temp1.ArrivalTime		// burst + start - arrival
 				turnaround := int64(a) + waitingTime
 				totalTurnaround += float64(turnaround)
 				completion := int64(a)
@@ -457,12 +462,7 @@ func RRSchedule(w io.Writer, title string, processes []Process) {
 					fmt.Sprint(turnaround),
 					fmt.Sprint(completion),
 				}
-				serviceTime = int64(a)
-				gantt = append(gantt, TimeSlice{
-					PID:   temp1.ProcessID,
-					Start: start,
-					Stop:  serviceTime,
-				})
+				// serviceTime = int64(a)
 			} else{
 				secondQ = remove(secondQ, temp1.ProcessID)
 				secondQ = append(secondQ, temp1)
