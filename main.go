@@ -164,20 +164,17 @@ func findRep(s []Process, i int64) int64 {
 	return k						// return the count of matching processes
 }
 
-func newProcess(ID int64) *Process {
-	run1 := Process{ProcessID: ID}
-	return &run1
-}
-
+// search function used to search if a process is present in a process slice
 func searchP(slic []Process, Pr Process) bool{
-	for a := range slic{
-		if slic[a] == Pr {
-			return true
+	for a := range slic{		// search the slice for the process one by one
+		if slic[a] == Pr {		// if the current process is the same
+			return true			// return true, indicating the process is present in the given slice
 		}
 	}
-	return false
+	return false				// if the process was not identified, return false suggesting no match was found
 }
 
+// Shortest Job First schedule function
 func SJFSchedule(w io.Writer, title string, processes []Process) {
 	var (
 		serviceTime     int64
@@ -197,15 +194,12 @@ func SJFSchedule(w io.Writer, title string, processes []Process) {
 		templateP		Process
 		ran				= make([]Process, len(processes))
 	)
-	inProgress.ProcessID = -1
+	inProgress.ProcessID = -1		// placeholder process variables are loaded with identifiers to ensure they are not mis-adjusted
 	templateP.ProcessID = -1
 	templateP.BurstDuration = 100
 
 	for i := 0; i<=99; i++ {	
 		low = 100
-		/*if i <= 20 {
-			print("Time is: ", i, "\n")
-		}*/ 
 		change = false
 		for a := range processes{
 			if processes[a].ArrivalTime <= int64(i) && !searchP(ran, processes[a]){
@@ -230,8 +224,6 @@ func SJFSchedule(w io.Writer, title string, processes []Process) {
 			if int64(i) == inProgress.BurstDuration + starts[inProgress.ProcessID] {
 				currentProc += 1
 				waitingTime = starts[inProgress.ProcessID] - inProgress.ArrivalTime
-				// print("time is currently: ", i, " = ", inProgress.BurstDuration, " + ", starts[inProgress.ProcessID])
-				// print("starts: ", starts[inProgress.ProcessID], " - ArrivalTime: ", inProgress.ArrivalTime, " = WaitingTime: ", waitingTime, "\n")
 				totalWait += float64(waitingTime)
 				start := waitingTime + inProgress.ArrivalTime		// burst + start - arrival
 				turnaround := inProgress.BurstDuration + waitingTime
@@ -253,7 +245,6 @@ func SJFSchedule(w io.Writer, title string, processes []Process) {
 					Start: start,
 					Stop:  serviceTime,
 				})
-				// print("\nCurrent gantt append: ProcessID: ", inProgress.ProcessID, ", Waiting time: ", waitingTime, ", start: ", start, ", stop: ", serviceTime, ", Burst Duration: ", inProgress.BurstDuration, "\n")
 				ran = append(ran, inProgress)
 				inProgress = templateP
 				for b := range arrived {
@@ -358,7 +349,6 @@ func SJFPrioritySchedule(w io.Writer, title string, processes []Process) {
 					Start: start,
 					Stop:  serviceTime,
 				})
-				// print("\nCurrent gantt append: ProcessID: ", inProgress.ProcessID, ", Waiting time: ", waitingTime, ", start: ", start, ", stop: ", serviceTime, ", Burst Duration: ", inProgress.BurstDuration, "\n")
 				ran = append(ran, inProgress)
 				inProgress = templateP
 				for b := range arrived {
@@ -399,7 +389,6 @@ func RRSchedule(w io.Writer, title string, processes []Process) {
 		gantt           = make([]TimeSlice, 0)
 		maxTime			int64 = 1
 		secondQ			= make([]Process, 0)
-		// status			= make([]bool, len(processes))
 		temp1			Process
 		lstRan			= make([]Process, len(processes))
 		starts			= make([]int64, 100)
@@ -409,13 +398,6 @@ func RRSchedule(w io.Writer, title string, processes []Process) {
 		starts[z] = -1				// as no start time would be -1
 	}
 	for a := 0; a<100; a++{			// a = seconds and is therefore the timer for the function
-		if a < 25 {
-			print("Time is: ", a, ", Second Queue = ")
-			for c := range secondQ {
-				print(secondQ[c].ProcessID, ", ")
-			}
-			print("\n")
-		}
 		for b := range processes{
 			if processes[b].ArrivalTime <= int64(a) && findRep(lstRan, processes[b].ProcessID) == 0 && findRep(secondQ, processes[b].ProcessID) == 0{
 				secondQ = append(secondQ, processes[b])
@@ -438,14 +420,11 @@ func RRSchedule(w io.Writer, title string, processes []Process) {
 				Stop:  serviceTime,
 			})
 			if secondQ[0].BurstDuration == 0 {
-				print("\nTime is: ", a, ", Completed value = ", secondQ[0].ProcessID, "\n")
 				lstRan = append(lstRan, secondQ[0])
 				secondQ = remove(secondQ, secondQ[0].ProcessID)
 				currentProc += 1
 				waitingTime = starts[temp1.ProcessID] - temp1.ArrivalTime
-				// print("waitingTime(", temp1.ProcessID, ") = ", "starts[", temp1.ProcessID, "] ", starts[temp1.ProcessID], " - ArrivalTime(", temp1.ArrivalTime, ") = ", waitingTime)
 				totalWait += float64(waitingTime)
-				// start := waitingTime + temp1.ArrivalTime		// burst + start - arrival
 				turnaround := int64(a) + waitingTime
 				totalTurnaround += float64(turnaround)
 				completion := int64(a)
