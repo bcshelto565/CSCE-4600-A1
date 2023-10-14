@@ -128,36 +128,40 @@ func FCFSSchedule(w io.Writer, title string, processes []Process) {
 	outputSchedule(w, schedule, aveWait, aveTurnaround, aveThroughput)
 }
 
-
+// a basic removal funciton in order to remove the identified process by its ProcessID
+// I used the processID itself instead of the process as a whole as in some of the functions 
+// change values in the process making the process itself a different variable when searched for
 func remove(s []Process, j int64) []Process {
-    var k int64
-	for i := range s{
-		if s[i].ProcessID == j{
-			k = int64(i)
-			break
+    var k int64		// identifier for position
+	for i := range s{		// search the slice for the identifiable process
+		if s[i].ProcessID == j{		// if the id matches
+			k = int64(i)		// the k value holds the position
+			break		// leave the search
 		}
 	}
-	s[k] = s[len(s)-1]
-    return s[:len(s)-1]
+	s[k] = s[len(s)-1]		// adjust the slice to ensure the slice no longer contains the process
+    return s[:len(s)-1]		// return the adjusted slice value so that the slice is no longer inside the slice
 }
 
+// basic find matching process and its position in the slice function
 func find(s []Process, i int64) int64 {
-	for j:=0; j<len(s); j++{
-		if s[j].ProcessID == i{
-			return int64(j)
+	for j:=0; j<len(s); j++{		// search the slice
+		if s[j].ProcessID == i{		// if the current process matches the process id of the intended target
+			return int64(j)			// return the position in which the process is found in the slice
 		}
 	}
-	return 0
+	return 0						// if there is no matching position the value 0 is returned as a control return
 }
 
+// function to find how many times a process is identified in a given slice
 func findRep(s []Process, i int64) int64 {
-	var k int64 = 0
-	for j := range s {
-		if s[j].ProcessID == i {
-			k++
+	var k int64 = 0					// variable counting how many times a process is identified
+	for j := range s {				// search the whole slice
+		if s[j].ProcessID == i {			// if the current process has the same process id
+			k++						// increment k to match the count of matching processes
 		}
 	}
-	return k
+	return k						// return the count of matching processes
 }
 
 func newProcess(ID int64) *Process {
@@ -386,7 +390,7 @@ func SJFPrioritySchedule(w io.Writer, title string, processes []Process) {
 // the main difference is programming in a timer variable to pre-empt the processes which do not finish in the allotted time
 func RRSchedule(w io.Writer, title string, processes []Process) {
 	var (
-		// serviceTime     int64
+		serviceTime     int64
 		totalWait       float64
 		totalTurnaround float64
 		lastCompletion  float64
@@ -431,7 +435,7 @@ func RRSchedule(w io.Writer, title string, processes []Process) {
 			gantt = append(gantt, TimeSlice{
 				PID:   temp1.ProcessID,
 				Start: int64(a),
-				Stop:  int64(a+1),
+				Stop:  serviceTime,
 			})
 			if secondQ[0].BurstDuration == 0 {
 				print("\nTime is: ", a, ", Completed value = ", secondQ[0].ProcessID, "\n")
@@ -462,7 +466,7 @@ func RRSchedule(w io.Writer, title string, processes []Process) {
 					fmt.Sprint(turnaround),
 					fmt.Sprint(completion),
 				}
-				// serviceTime = int64(a)
+				serviceTime = int64(a)
 			} else{
 				secondQ = remove(secondQ, temp1.ProcessID)
 				secondQ = append(secondQ, temp1)
