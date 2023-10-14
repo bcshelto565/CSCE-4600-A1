@@ -429,15 +429,17 @@ func RRSchedule(w io.Writer, title string, processes []Process) {
 			secondQ[0].BurstDuration -= int64(maxTime)
 			temp1 = secondQ[0]
 			if secondQ[0].BurstDuration == 0 {
+				print("\nTime is: ", a, ", Completed value = ", secondQ[0].ProcessID, "\n")
 				lstRan = append(lstRan, secondQ[0])
 				secondQ = remove(secondQ, secondQ[0].ProcessID)
 				currentProc += 1
 				waitingTime = starts[temp1.ProcessID] - temp1.ArrivalTime
+				// print("waitingTime(", temp1.ProcessID, ") = ", "starts[", temp1.ProcessID, "] ", starts[temp1.ProcessID], " - ArrivalTime(", temp1.ArrivalTime, ") = ", waitingTime)
 				totalWait += float64(waitingTime)
 				start := waitingTime + temp1.ArrivalTime		// burst + start - arrival
-				turnaround := temp1.BurstDuration + waitingTime
+				turnaround := int64(a) + waitingTime
 				totalTurnaround += float64(turnaround)
-				completion := temp1.BurstDuration + temp1.ArrivalTime + waitingTime
+				completion := int64(a)
 				lastCompletion = float64(completion)
 				var temp2 int64 = 0
 				for d := range processes {
