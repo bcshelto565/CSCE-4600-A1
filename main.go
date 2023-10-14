@@ -1,3 +1,4 @@
+// Bailey Shelton :/ CSCE 4600 :/ 10/14/2023
 package main
 
 import (
@@ -198,39 +199,39 @@ func SJFSchedule(w io.Writer, title string, processes []Process) {
 	templateP.ProcessID = -1
 	templateP.BurstDuration = 100
 
-	for i := 0; i<=99; i++ {	
-		low = 100
-		change = false
-		for a := range processes{
+	for i := 0; i<=99; i++ {		// timer for loop to reflect each second as it passes
+		low = 100					// placeholder lowest burst duration value is loaded
+		change = false				// if the value currently running is changed this bool reflects it
+		for a := range processes{		// load all applicable processes into the ready to run stack, but only if they have not run already
 			if processes[a].ArrivalTime <= int64(i) && !searchP(ran, processes[a]){
 				arrived = append(arrived, processes[a])
 			}
 		}
-		if inProgress.ProcessID >= 0 && !searchP(ran, inProgress){
-			low = inProgress.BurstDuration
+		if inProgress.ProcessID >= 0 && !searchP(ran, inProgress){		// the lowest burst duration should be what is currently runnning, 
+			low = inProgress.BurstDuration								// but only if this is an actual process, not a placeholder
 		}
-		for b := range arrived {
+		for b := range arrived {										// loop to determine if the currently running process is not the top process anymore
 			if b < len(arrived){
 				if arrived[b].BurstDuration < low && !searchP(ran, arrived[b]){
-					inProgress = arrived[b]
-					change = true
+					inProgress = arrived[b]								// if the arrived process is lower in burst duration than the current in progress process
+					change = true										// pre-empt it and reflect the change in the bool variable
 				}
 			}
 		}
-		if change == true {
+		if change == true {												// if a new process started, record it's start value in the starts slice
 			starts[inProgress.ProcessID] = int64(i)
 		}
-		if inProgress.ProcessID >= 0 && !searchP(ran, inProgress){
+		if inProgress.ProcessID >= 0 && !searchP(ran, inProgress){		// if the current in progress process has completed its run and is not already recorded as complete
 			if int64(i) == inProgress.BurstDuration + starts[inProgress.ProcessID] {
-				currentProc += 1
-				waitingTime = starts[inProgress.ProcessID] - inProgress.ArrivalTime
-				totalWait += float64(waitingTime)
-				start := waitingTime + inProgress.ArrivalTime		// burst + start - arrival
-				turnaround := inProgress.BurstDuration + waitingTime
-				totalTurnaround += float64(turnaround)
-				completion := inProgress.BurstDuration + inProgress.ArrivalTime + waitingTime
-				lastCompletion = float64(completion)
-				schedule[currentProc] = []string{
+				currentProc += 1		// increment the schedule counter
+				waitingTime = starts[inProgress.ProcessID] - inProgress.ArrivalTime		// waiting time is equal to the start time - the arrival time
+				totalWait += float64(waitingTime)		// increment total wait to reflect the change in wait time
+				start := waitingTime + inProgress.ArrivalTime		// burst + start - arrival, but actually the start time for the process
+				turnaround := inProgress.BurstDuration + waitingTime		// burst duration + the waiting time
+				totalTurnaround += float64(turnaround)			// increment the turnaround counter
+				completion := inProgress.BurstDuration + inProgress.ArrivalTime + waitingTime		// add the completion total time
+				lastCompletion = float64(completion)		// last completion is currently this completion
+				schedule[currentProc] = []string{		// write the schedule value based on the schedule counter
 					fmt.Sprint(inProgress.ProcessID),
 					fmt.Sprint(inProgress.Priority),
 					fmt.Sprint(inProgress.BurstDuration),
@@ -239,15 +240,15 @@ func SJFSchedule(w io.Writer, title string, processes []Process) {
 					fmt.Sprint(turnaround),
 					fmt.Sprint(completion),
 				}
-				serviceTime = int64(i)
-				gantt = append(gantt, TimeSlice{
+				serviceTime = int64(i)		// servicetime is the current time in seconds
+				gantt = append(gantt, TimeSlice{		// add the current stretch of time
 					PID:   inProgress.ProcessID,
 					Start: start,
 					Stop:  serviceTime,
 				})
-				ran = append(ran, inProgress)
-				inProgress = templateP
-				for b := range arrived {
+				ran = append(ran, inProgress)		// add this process to the run counter
+				inProgress = templateP		// in progress is now a placeholder variable again
+				for b := range arrived {		// set the new in progress process
 					if b < len(arrived){
 						if arrived[b].BurstDuration < low && !searchP(ran, arrived[b]){
 							inProgress = arrived[b]
@@ -271,7 +272,10 @@ func SJFSchedule(w io.Writer, title string, processes []Process) {
 	outputSchedule(w, schedule, aveWait, aveTurnaround, aveThroughput)
 }
 
-
+// Shortest Job First schedule function but with priority added
+// since I used the exact same code for this except for in cases of conflicting burst durations
+// with the priority value being the tie-breaker, I will only comment the section I changed.
+// read above to check about the other stuff
 func SJFPrioritySchedule(w io.Writer, title string, processes []Process) {
 	var (
 		serviceTime     int64
@@ -306,11 +310,11 @@ func SJFPrioritySchedule(w io.Writer, title string, processes []Process) {
 		if inProgress.ProcessID >= 0 && !searchP(ran, inProgress){
 			low = inProgress.BurstDuration
 		}
-		for b := range arrived {		// adjust this loop to include the priority property and split ties based on priority
+		for b := range arrived {		// same loop as in the Shortest Job First Function, but a tie-breaker value is the priority value
 			if b < len(arrived){
-				if arrived[b].BurstDuration == low && !searchP(ran, arrived[b]){
-					if arrived[b].Priority < inProgress.Priority{
-						inProgress = arrived[b]
+				if arrived[b].BurstDuration == low && !searchP(ran, arrived[b]){		// if both have equal burst durations
+					if arrived[b].Priority < inProgress.Priority{		// check which has a higher priority
+						inProgress = arrived[b]		
 					} else {
 						continue
 					}
@@ -375,9 +379,9 @@ func SJFPrioritySchedule(w io.Writer, title string, processes []Process) {
 	outputSchedule(w, schedule, aveWait, aveTurnaround, aveThroughput)
 }
 
-// writing the Round-Robin scheduling function, I copied the basis of the First Come First Serve function
-// the FCFS function and Round Robin are essentially the same in so far as handling the processes in arrival order
-// the main difference is programming in a timer variable to pre-empt the processes which do not finish in the allotted time
+// I rewrote this function to reflect the trade-off system used to constantly partially perform each process
+// the function now uses a queue which is consistently adjusted each time the maxTime variable is run on a process
+// the maxTime variable could be adjusted to match a different time quantum should the function need to be adjusted
 func RRSchedule(w io.Writer, title string, processes []Process) {
 	var (
 		serviceTime     int64
@@ -400,43 +404,43 @@ func RRSchedule(w io.Writer, title string, processes []Process) {
 	for a := 0; a<100; a++{			// a = seconds and is therefore the timer for the function
 		for b := range processes{
 			if processes[b].ArrivalTime <= int64(a) && findRep(lstRan, processes[b].ProcessID) == 0 && findRep(secondQ, processes[b].ProcessID) == 0{
-				secondQ = append(secondQ, processes[b])
-			} else {
+				secondQ = append(secondQ, processes[b])		// if the current process is arrived, not already run, or already in the secondary queue,
+			} else {		// add it to the queue
 				continue
 			}
 		}
-		if len(secondQ) != 0 {
+		if len(secondQ) != 0 {		// if the secondary queue is not empty
 			if secondQ[0].ProcessID == 0{
-				secondQ = remove(secondQ, 0)
+				secondQ = remove(secondQ, 0)		// remove the current value in secondary queue if it is a processID of 0, which should not be in the list
 			}
-			if starts[secondQ[0].ProcessID] == -1 {
+			if starts[secondQ[0].ProcessID] == -1 {		// if the start variable for the currently running process is the placeholder -1, record the accurate start time
 				starts[secondQ[0].ProcessID] = int64(a)
 			}
-			secondQ[0].BurstDuration -= int64(maxTime)
-			temp1 = secondQ[0]
-			gantt = append(gantt, TimeSlice{
+			secondQ[0].BurstDuration -= int64(maxTime)		// remove the time from the burst duration to reflect the running time
+			temp1 = secondQ[0]		// placeholder copy
+			gantt = append(gantt, TimeSlice{		// gantt adjust for the current runtime
 				PID:   temp1.ProcessID,
 				Start: int64(a),
 				Stop:  serviceTime,
 			})
-			if secondQ[0].BurstDuration == 0 {
-				lstRan = append(lstRan, secondQ[0])
-				secondQ = remove(secondQ, secondQ[0].ProcessID)
-				currentProc += 1
-				waitingTime = starts[temp1.ProcessID] - temp1.ArrivalTime
-				totalWait += float64(waitingTime)
-				turnaround := int64(a) + waitingTime
-				totalTurnaround += float64(turnaround)
-				completion := int64(a)
-				lastCompletion = float64(completion)
-				var temp2 int64 = 0
+			if secondQ[0].BurstDuration == 0 {		// if the process finished
+				lstRan = append(lstRan, secondQ[0])		// add to the complete list
+				secondQ = remove(secondQ, secondQ[0].ProcessID)		// remove from the secondary queue to avoid repeats
+				currentProc += 1		// increment the schedule counter
+				waitingTime = starts[temp1.ProcessID] - temp1.ArrivalTime		// the waiting time is the start value - arrival time
+				totalWait += float64(waitingTime)		// increment the totalwait
+				turnaround := int64(a) + waitingTime		// turnaround is the wait time + the completion time
+				totalTurnaround += float64(turnaround)		// increment the total turnaround time
+				completion := int64(a)		// completion is the current time
+				lastCompletion = float64(completion)		// last completion is the current completion until adjusted later
+				var temp2 int64 = 0		// temporary int variable for search
 				for d := range processes {
 					if processes[d].ProcessID == temp1.ProcessID {
-						temp2 = int64(d)
+						temp2 = int64(d)	// when a matching position is found, save that position with temp2
 						break
 					}
 				}
-				schedule[currentProc] = []string{
+				schedule[currentProc] = []string{		// write the schedule
 					fmt.Sprint(temp1.ProcessID),
 					fmt.Sprint(temp1.Priority),
 					fmt.Sprint(processes[temp2].BurstDuration),
@@ -446,7 +450,7 @@ func RRSchedule(w io.Writer, title string, processes []Process) {
 					fmt.Sprint(completion),
 				}
 				serviceTime = int64(a)
-			} else{
+			} else{		// if not complete continue swapping the processes from the front to the rear after they have been incremented for running
 				secondQ = remove(secondQ, temp1.ProcessID)
 				secondQ = append(secondQ, temp1)
 				continue
@@ -465,15 +469,6 @@ func RRSchedule(w io.Writer, title string, processes []Process) {
 //endregion
 
 //region Output helpers
-
-/*func sameProcess(slice1, slice2 []string) bool {
-    for i := range slice1 {
-        if slice1[0] != slice2[0][0] {
-            return false
-        }
-    }
-    return true
-}*/
 
 func outputTitle(w io.Writer, title string) {
 	_, _ = fmt.Fprintln(w, strings.Repeat("-", len(title)*2))
