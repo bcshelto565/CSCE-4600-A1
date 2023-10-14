@@ -34,7 +34,7 @@ func main() {
 	
 	SJFPrioritySchedule(os.Stdout, "Priority", processes)
 	//
-	//RRSchedule(os.Stdout, "Round-robin", processes)
+	RRSchedule(os.Stdout, "Round-robin", processes)
 }
 
 func openProcessingFile(args ...string) (*os.File, func(), error) {
@@ -92,7 +92,7 @@ func FCFSSchedule(w io.Writer, title string, processes []Process) {
 		totalWait += float64(waitingTime)
 
 		start := waitingTime + processes[i].ArrivalTime
-		print("\nCurrent gantt append: ProcessID: ", processes[i].ProcessID, ", WaitingTime: ", waitingTime, ", start: ", start, ", stop: ", serviceTime, ", Burst Duration: ", processes[i].BurstDuration, "\n")
+		// print("\nCurrent gantt append: ProcessID: ", processes[i].ProcessID, ", WaitingTime: ", waitingTime, ", start: ", start, ", stop: ", serviceTime, ", Burst Duration: ", processes[i].BurstDuration, "\n")
 
 		turnaround := processes[i].BurstDuration + waitingTime
 		totalTurnaround += float64(turnaround)
@@ -199,9 +199,9 @@ func SJFSchedule(w io.Writer, title string, processes []Process) {
 
 	for i := 0; i<=99; i++ {	
 		low = 100
-		if i <= 20 {
+		/*if i <= 20 {
 			print("Time is: ", i, "\n")
-		}
+		}*/ 
 		change = false
 		for a := range processes{
 			if processes[a].ArrivalTime <= int64(i) && !searchP(ran, processes[a]){
@@ -226,8 +226,8 @@ func SJFSchedule(w io.Writer, title string, processes []Process) {
 			if int64(i) == inProgress.BurstDuration + starts[inProgress.ProcessID] {
 				currentProc += 1
 				waitingTime = starts[inProgress.ProcessID] - inProgress.ArrivalTime
-				print("time is currently: ", i, " = ", inProgress.BurstDuration, " + ", starts[inProgress.ProcessID])
-				print("starts: ", starts[inProgress.ProcessID], " - ArrivalTime: ", inProgress.ArrivalTime, " = WaitingTime: ", waitingTime, "\n")
+				// print("time is currently: ", i, " = ", inProgress.BurstDuration, " + ", starts[inProgress.ProcessID])
+				// print("starts: ", starts[inProgress.ProcessID], " - ArrivalTime: ", inProgress.ArrivalTime, " = WaitingTime: ", waitingTime, "\n")
 				totalWait += float64(waitingTime)
 				start := waitingTime + inProgress.ArrivalTime		// burst + start - arrival
 				turnaround := inProgress.BurstDuration + waitingTime
@@ -249,7 +249,7 @@ func SJFSchedule(w io.Writer, title string, processes []Process) {
 					Start: start,
 					Stop:  serviceTime,
 				})
-				print("\nCurrent gantt append: ProcessID: ", inProgress.ProcessID, ", Waiting time: ", waitingTime, ", start: ", start, ", stop: ", serviceTime, ", Burst Duration: ", inProgress.BurstDuration, "\n")
+				// print("\nCurrent gantt append: ProcessID: ", inProgress.ProcessID, ", Waiting time: ", waitingTime, ", start: ", start, ", stop: ", serviceTime, ", Burst Duration: ", inProgress.BurstDuration, "\n")
 				ran = append(ran, inProgress)
 				inProgress = templateP
 				for b := range arrived {
@@ -383,9 +383,61 @@ func SJFPrioritySchedule(w io.Writer, title string, processes []Process) {
 	outputSchedule(w, schedule, aveWait, aveTurnaround, aveThroughput)
 }
 
-
+// writing the Round-Robin scheduling function, I copied the basis of the First Come First Serve function
+// the FCFS function and Round Robin are essentially the same in so far as handling the processes in arrival order
+// the main difference is programming in a timer variable to pre-empt the processes which do not finish in the allotted time
 func RRSchedule(w io.Writer, title string, processes []Process) {
-
+	var (
+		serviceTime     int64
+		totalWait       float64
+		totalTurnaround float64
+		lastCompletion  float64
+		waitingTime     int64
+		schedule        = make([][]string, len(processes))
+		gantt           = make([]TimeSlice, 0)
+		maxTime			int64 = 1
+		// boo1			bool = false
+		// secondQ			= make([]Process, len(processes))
+		status			= make([]bool, len(processes))
+	)
+	for a := range processes {
+		if processes[a].ArrivalTime > 0 {
+			waitingTime = serviceTime - processes[a].ArrivalTime
+		}
+		totalWait += float64(waitingTime)
+		start := waitingTime + processes[a].ArrivalTime
+		// print("\nCurrent gantt append: ProcessID: ", processes[a].ProcessID, ", WaitingTime: ", waitingTime, ", start: ", start, ", stop: ", serviceTime, ", Burst Duration: ", processes[i].BurstDuration, "\n")
+		if maxTime >= processes[a].BurstDuration {
+			status[a] = true
+			turnaround := maxTime + waitingTime
+			totalTurnaround += float64(turnaround)
+			completion := maxTime + processes[a].ArrivalTime + waitingTime
+			lastCompletion = float64(completion)
+			schedule[a] = []string{
+				fmt.Sprint(processes[a].ProcessID),
+				fmt.Sprint(processes[a].Priority),
+				fmt.Sprint(processes[a].BurstDuration),
+				fmt.Sprint(processes[a].ArrivalTime),
+				fmt.Sprint(waitingTime),
+				fmt.Sprint(turnaround),
+				fmt.Sprint(completion),
+			}
+			serviceTime += maxTime
+			gantt = append(gantt, TimeSlice{
+				PID:   processes[a].ProcessID,
+				Start: start,
+				Stop:  serviceTime,
+			})
+		} else {
+			status[a] = false
+			/*serviceTime += maxTime
+			gantt = append(gantt, TimeSlice{
+				PID:   processes[a].ProcessID,
+				Start: start,
+				Stop:  serviceTime,
+			})*/
+		}
+	}
 	count := float64(len(processes))
 	aveWait := totalWait / count
 	aveTurnaround := totalTurnaround / count
