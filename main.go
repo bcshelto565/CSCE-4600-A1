@@ -333,8 +333,6 @@ func SJFPrioritySchedule(w io.Writer, title string, processes []Process) {
 			if int64(i) == inProgress.BurstDuration + starts[inProgress.ProcessID] {
 				currentProc += 1
 				waitingTime = starts[inProgress.ProcessID] - inProgress.ArrivalTime
-				// print("time is currently: ", i, " = ", inProgress.BurstDuration, " + ", starts[inProgress.ProcessID])
-				// print("starts: ", starts[inProgress.ProcessID], " - ArrivalTime: ", inProgress.ArrivalTime, " = WaitingTime: ", waitingTime, "\n")
 				totalWait += float64(waitingTime)
 				start := waitingTime + inProgress.ArrivalTime		// burst + start - arrival
 				turnaround := inProgress.BurstDuration + waitingTime
@@ -396,48 +394,80 @@ func RRSchedule(w io.Writer, title string, processes []Process) {
 		schedule        = make([][]string, len(processes))
 		gantt           = make([]TimeSlice, 0)
 		maxTime			int64 = 1
-		// boo1			bool = false
-		// secondQ			= make([]Process, len(processes))
-		status			= make([]bool, len(processes))
+		secondQ			= make([]Process, 0)
+		// status			= make([]bool, len(processes))
+		temp1			Process
+		lstRan			= make([]Process, len(processes))
+		starts			= make([]int64, 100)
+		currentProc		int64 = -1
 	)
-	for a := range processes {
-		if processes[a].ArrivalTime > 0 {
-			waitingTime = serviceTime - processes[a].ArrivalTime
-		}
-		totalWait += float64(waitingTime)
-		start := waitingTime + processes[a].ArrivalTime
-		// print("\nCurrent gantt append: ProcessID: ", processes[a].ProcessID, ", WaitingTime: ", waitingTime, ", start: ", start, ", stop: ", serviceTime, ", Burst Duration: ", processes[i].BurstDuration, "\n")
-		if maxTime >= processes[a].BurstDuration {
-			status[a] = true
-			turnaround := maxTime + waitingTime
-			totalTurnaround += float64(turnaround)
-			completion := maxTime + processes[a].ArrivalTime + waitingTime
-			lastCompletion = float64(completion)
-			schedule[a] = []string{
-				fmt.Sprint(processes[a].ProcessID),
-				fmt.Sprint(processes[a].Priority),
-				fmt.Sprint(processes[a].BurstDuration),
-				fmt.Sprint(processes[a].ArrivalTime),
-				fmt.Sprint(waitingTime),
-				fmt.Sprint(turnaround),
-				fmt.Sprint(completion),
-			}
-			serviceTime += maxTime
-			gantt = append(gantt, TimeSlice{
-				PID:   processes[a].ProcessID,
-				Start: start,
-				Stop:  serviceTime,
-			})
-		} else {
-			status[a] = false
-			/*serviceTime += maxTime
-			gantt = append(gantt, TimeSlice{
-				PID:   processes[a].ProcessID,
-				Start: start,
-				Stop:  serviceTime,
-			})*/
-		}
+	for z := range starts{
+		starts[z] = -1
 	}
+	for a := 0; a<100; a++{
+		if a < 25 {
+			print("Time is: ", a, ", Second Queue = ")
+			for c := range secondQ {
+				print(secondQ[c].ProcessID, ", ")
+			}
+			print("\n")
+		}
+		for b := range processes{
+			if processes[b].ArrivalTime <= int64(a) && findRep(lstRan, processes[b].ProcessID) == 0 && findRep(secondQ, processes[b].ProcessID) == 0{
+				secondQ = append(secondQ, processes[b])
+			} else {
+				continue
+			}
+		}
+		if len(secondQ) != 0 {
+			if secondQ[0].ProcessID == 0{
+				secondQ = remove(secondQ, 0)
+			}
+			if starts[secondQ[0].ProcessID] == -1 {
+				starts[secondQ[0].ProcessID] = int64(a)
+			}
+			secondQ[0].BurstDuration -= int64(maxTime)
+			temp1 = secondQ[0]
+			if secondQ[0].BurstDuration == 0 {
+				lstRan = append(lstRan, secondQ[0])
+				secondQ = remove(secondQ, secondQ[0].ProcessID)
+				currentProc += 1
+				waitingTime = starts[temp1.ProcessID] - temp1.ArrivalTime
+				totalWait += float64(waitingTime)
+				start := waitingTime + temp1.ArrivalTime		// burst + start - arrival
+				turnaround := temp1.BurstDuration + waitingTime
+				totalTurnaround += float64(turnaround)
+				completion := temp1.BurstDuration + temp1.ArrivalTime + waitingTime
+				lastCompletion = float64(completion)
+				var temp2 int64 = 0
+				for d := range processes {
+					if processes[d].ProcessID == temp1.ProcessID {
+						temp2 = int64(d)
+						break
+					}
+				}
+				schedule[currentProc] = []string{
+					fmt.Sprint(temp1.ProcessID),
+					fmt.Sprint(temp1.Priority),
+					fmt.Sprint(processes[temp2].BurstDuration),
+					fmt.Sprint(temp1.ArrivalTime),
+					fmt.Sprint(waitingTime),
+					fmt.Sprint(turnaround),
+					fmt.Sprint(completion),
+				}
+				serviceTime = int64(a)
+				gantt = append(gantt, TimeSlice{
+					PID:   temp1.ProcessID,
+					Start: start,
+					Stop:  serviceTime,
+				})
+			} else{
+				secondQ = remove(secondQ, temp1.ProcessID)
+				secondQ = append(secondQ, temp1)
+				continue
+			}
+		}
+	} 
 	count := float64(len(processes))
 	aveWait := totalWait / count
 	aveTurnaround := totalTurnaround / count
